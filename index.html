@@ -377,6 +377,40 @@
             font-size: 0.875rem;
         }
         
+        .floating-badge {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 9999px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .floating-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .floating-badge span {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .floating-badge img {
+            height: 22px;
+            width: auto;
+        }
+        
         @media (max-width: 1024px) {
             .summary-grid { grid-template-columns: 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
@@ -682,6 +716,12 @@
             <p>Misery Index · Data based on 2026 schedules · Costs are estimates for 2 people (flights + 1 night hotel) · Distances calculated from your selected hometown</p>
         </footer>
     </div>
+
+    <!-- Floating Badge -->
+    <a href="https://vtsportssolutions.com" target="_blank" rel="noopener" class="floating-badge">
+        <span>made with ❤️ by</span>
+        <img src="vt-logo-text.png" alt="VT Sports Solutions">
+    </a>
 
     <script src="teams-data.js"></script>
     <script>
