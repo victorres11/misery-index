@@ -962,12 +962,17 @@
             
             if (stadium.distance < 100) {
                 return { text: `${stadium.totalTime} 🚗`, color: 'var(--accent-green)' };
+            } else if (stadium.distance < 150) {
+                // Drivable but far
+                return { text: `${stadium.totalTime} 🚗`, color: 'var(--accent-yellow)' };
             } else {
                 const schedule = SCHEDULES[teamId];
                 const homeGames = schedule ? schedule.filter(g => g.type === 'home').length : 0;
-                const flightTime = stadium.flight || '?h';
+                // Calculate flight time from distance (avg 500mph + buffer)
+                const flightHours = Math.round(stadium.distance / 500 + 0.5); // +0.5 for takeoff/landing
+                const flightTime = `${flightHours}h`;
                 return { 
-                    text: `${homeGames} × ${flightTime.replace(' (1 stop)', '')} ✈️`, 
+                    text: `${homeGames} × ${flightTime} ✈️`, 
                     color: stadium.distance > 1700 ? 'var(--accent-red)' : 'var(--accent-yellow)' 
                 };
             }
