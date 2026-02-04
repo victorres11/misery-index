@@ -93,16 +93,40 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: bold;
+            color: white;
+            flex-shrink: 0;
         }
-        
-        .school-logo.texas { background: linear-gradient(135deg, #bf5700, #8b3d00); }
-        .school-logo.lsu { background: linear-gradient(135deg, #461d7c, #2a1147); }
-        .school-logo.ucla { background: linear-gradient(135deg, #2d68c4, #f2a900); }
         
         .school-name { font-size: 1.25rem; font-weight: 600; }
         .school-conf { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .team-selector {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        
+        .team-selector:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        
+        .baseline-badge {
+            font-size: 0.625rem;
+            padding: 0.2rem 0.5rem;
+            background: var(--accent-green);
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
         
         .misery-score {
             text-align: center;
@@ -157,11 +181,7 @@
         }
         
         .map-tab:hover { border-color: var(--text-secondary); }
-        .map-tab.active { border-color: currentColor; }
-        .map-tab.ucla.active { color: #2d68c4; background: rgba(45, 104, 196, 0.2); }
-        .map-tab.texas.active { color: #bf5700; background: rgba(191, 87, 0, 0.2); }
-        .map-tab.lsu.active { color: #9b59b6; background: rgba(70, 29, 124, 0.2); }
-        .map-tab.all.active { color: #fff; background: rgba(255, 255, 255, 0.1); }
+        .map-tab.active { border-color: currentColor; color: #fff; background: rgba(255, 255, 255, 0.1); }
         
         #travelMap { height: 500px; border-radius: 0.75rem; background: var(--bg-secondary); }
         
@@ -175,10 +195,6 @@
         
         .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }
         .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .legend-dot.ucla { background: #2d68c4; }
-        .legend-dot.texas { background: #bf5700; }
-        .legend-dot.lsu { background: #9b59b6; }
-        .legend-dot.home { background: #10b981; }
         
         .charts-section { margin-bottom: 3rem; }
         .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
@@ -189,10 +205,6 @@
             border: 1px solid var(--border-color);
         }
         .chart-title { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; color: var(--text-secondary); }
-        
-        @media (max-width: 900px) {
-            .charts-grid { grid-template-columns: 1fr; }
-        }
         
         .comparison-section {
             background: var(--bg-card);
@@ -207,7 +219,7 @@
         .comparison-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
         
         .bar-comparison { margin-bottom: 1.5rem; }
-        .bar-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .bar-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem; flex-wrap: wrap; gap: 0.5rem; }
         
         .bar-track {
             height: 32px;
@@ -221,15 +233,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            color: #000;
+            color: #fff;
             transition: width 0.5s ease-out;
+            min-width: 40px;
         }
-        
-        .bar-segment.texas { background: #bf5700; }
-        .bar-segment.lsu { background: #461d7c; color: #fff; }
-        .bar-segment.ucla { background: #2d68c4; color: #fff; }
         
         .schedule-section { margin-bottom: 3rem; }
         .schedule-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
@@ -296,6 +305,7 @@
         
         @media (max-width: 1024px) {
             .summary-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
             .schedule-row {
                 grid-template-columns: 70px 1fr 70px 60px !important;
                 font-size: 0.75rem;
@@ -322,101 +332,182 @@
         </header>
 
         <section class="summary-grid">
-            <!-- UCLA Card -->
-            <div class="school-card">
+            <!-- UCLA Card (Fixed Baseline) -->
+            <div class="school-card" id="card-ucla">
                 <div class="school-header">
-                    <div class="school-logo ucla">UCLA</div>
+                    <div class="school-logo" id="logo-ucla" style="background: #2d68c4;">UCLA</div>
                     <div>
-                        <div class="school-name">UCLA Bruins</div>
+                        <div class="school-name">
+                            UCLA Bruins
+                            <span class="baseline-badge">BASELINE</span>
+                        </div>
                         <div class="school-conf">Big Ten Conference</div>
                     </div>
                 </div>
                 <div class="misery-score">
                     <div class="misery-label">Season Misery Score</div>
-                    <div class="misery-value low">24</div>
+                    <div class="misery-value low" id="score-ucla">24</div>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Total Miles</div>
-                        <div class="stat-value">6,892</div>
+                        <div class="stat-value" id="miles-ucla">6,892</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Flights Needed</div>
-                        <div class="stat-value">4</div>
+                        <div class="stat-value" id="flights-ucla">4</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Est. Cost</div>
-                        <div class="stat-value">$4,200</div>
+                        <div class="stat-value" id="cost-ucla">$4,200</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Home Games</div>
-                        <div class="stat-value" style="color: var(--accent-green);">35 min 🚗</div>
+                        <div class="stat-value" id="home-ucla" style="color: var(--accent-green);">35 min 🚗</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Texas Card -->
-            <div class="school-card">
+            <!-- Team 2 Card (Selectable) -->
+            <div class="school-card" id="card-team2">
                 <div class="school-header">
-                    <div class="school-logo texas">TEX</div>
-                    <div>
-                        <div class="school-name">Texas Longhorns</div>
-                        <div class="school-conf">SEC</div>
+                    <div class="school-logo" id="logo-team2" style="background: #bf5700;">TEX</div>
+                    <div style="flex: 1;">
+                        <div class="school-name" id="name-team2">Texas Longhorns</div>
+                        <div class="school-conf" id="conf-team2">SEC</div>
+                        <select class="team-selector" id="selector-team2" onchange="updateTeam('team2', this.value)">
+                            <optgroup label="SEC">
+                                <option value="alabama">Alabama</option>
+                                <option value="arkansas">Arkansas</option>
+                                <option value="auburn">Auburn</option>
+                                <option value="florida">Florida</option>
+                                <option value="georgia">Georgia</option>
+                                <option value="kentucky">Kentucky</option>
+                                <option value="lsu">LSU</option>
+                                <option value="mississippi-state">Mississippi State</option>
+                                <option value="missouri">Missouri</option>
+                                <option value="oklahoma">Oklahoma</option>
+                                <option value="ole-miss">Ole Miss</option>
+                                <option value="south-carolina">South Carolina</option>
+                                <option value="tennessee">Tennessee</option>
+                                <option value="texas" selected>Texas</option>
+                                <option value="texas-am">Texas A&M</option>
+                                <option value="vanderbilt">Vanderbilt</option>
+                            </optgroup>
+                            <optgroup label="Big Ten">
+                                <option value="illinois">Illinois</option>
+                                <option value="indiana">Indiana</option>
+                                <option value="iowa">Iowa</option>
+                                <option value="maryland">Maryland</option>
+                                <option value="michigan">Michigan</option>
+                                <option value="michigan-state">Michigan State</option>
+                                <option value="minnesota">Minnesota</option>
+                                <option value="nebraska">Nebraska</option>
+                                <option value="northwestern">Northwestern</option>
+                                <option value="ohio-state">Ohio State</option>
+                                <option value="oregon">Oregon</option>
+                                <option value="penn-state">Penn State</option>
+                                <option value="purdue">Purdue</option>
+                                <option value="rutgers">Rutgers</option>
+                                <option value="usc">USC</option>
+                                <option value="washington">Washington</option>
+                                <option value="wisconsin">Wisconsin</option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
                 <div class="misery-score">
                     <div class="misery-label">Season Misery Score</div>
-                    <div class="misery-value high">78</div>
+                    <div class="misery-value high" id="score-team2">78</div>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Total Miles</div>
-                        <div class="stat-value">22,280</div>
+                        <div class="stat-value" id="miles-team2">22,280</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Flights Needed</div>
-                        <div class="stat-value">12</div>
+                        <div class="stat-value" id="flights-team2">12</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Est. Cost</div>
-                        <div class="stat-value">$14,200</div>
+                        <div class="stat-value" id="cost-team2">$14,200</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Home Games</div>
-                        <div class="stat-value" style="color: var(--accent-yellow);">7 × 3h ✈️</div>
+                        <div class="stat-value" id="home-team2" style="color: var(--accent-yellow);">7 × 3h ✈️</div>
                     </div>
                 </div>
             </div>
 
-            <!-- LSU Card -->
-            <div class="school-card">
+            <!-- Team 3 Card (Selectable) -->
+            <div class="school-card" id="card-team3">
                 <div class="school-header">
-                    <div class="school-logo lsu">LSU</div>
-                    <div>
-                        <div class="school-name">LSU Tigers</div>
-                        <div class="school-conf">SEC</div>
+                    <div class="school-logo" id="logo-team3" style="background: #461d7c;">LSU</div>
+                    <div style="flex: 1;">
+                        <div class="school-name" id="name-team3">LSU Tigers</div>
+                        <div class="school-conf" id="conf-team3">SEC</div>
+                        <select class="team-selector" id="selector-team3" onchange="updateTeam('team3', this.value)">
+                            <optgroup label="SEC">
+                                <option value="alabama">Alabama</option>
+                                <option value="arkansas">Arkansas</option>
+                                <option value="auburn">Auburn</option>
+                                <option value="florida">Florida</option>
+                                <option value="georgia">Georgia</option>
+                                <option value="kentucky">Kentucky</option>
+                                <option value="lsu" selected>LSU</option>
+                                <option value="mississippi-state">Mississippi State</option>
+                                <option value="missouri">Missouri</option>
+                                <option value="oklahoma">Oklahoma</option>
+                                <option value="ole-miss">Ole Miss</option>
+                                <option value="south-carolina">South Carolina</option>
+                                <option value="tennessee">Tennessee</option>
+                                <option value="texas">Texas</option>
+                                <option value="texas-am">Texas A&M</option>
+                                <option value="vanderbilt">Vanderbilt</option>
+                            </optgroup>
+                            <optgroup label="Big Ten">
+                                <option value="illinois">Illinois</option>
+                                <option value="indiana">Indiana</option>
+                                <option value="iowa">Iowa</option>
+                                <option value="maryland">Maryland</option>
+                                <option value="michigan">Michigan</option>
+                                <option value="michigan-state">Michigan State</option>
+                                <option value="minnesota">Minnesota</option>
+                                <option value="nebraska">Nebraska</option>
+                                <option value="northwestern">Northwestern</option>
+                                <option value="ohio-state">Ohio State</option>
+                                <option value="oregon">Oregon</option>
+                                <option value="penn-state">Penn State</option>
+                                <option value="purdue">Purdue</option>
+                                <option value="rutgers">Rutgers</option>
+                                <option value="usc">USC</option>
+                                <option value="washington">Washington</option>
+                                <option value="wisconsin">Wisconsin</option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
                 <div class="misery-score">
                     <div class="misery-label">Season Misery Score</div>
-                    <div class="misery-value high">92</div>
+                    <div class="misery-value high" id="score-team3">92</div>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Total Miles</div>
-                        <div class="stat-value">29,140</div>
+                        <div class="stat-value" id="miles-team3">29,140</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Flights Needed</div>
-                        <div class="stat-value">12</div>
+                        <div class="stat-value" id="flights-team3">12</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Est. Cost</div>
-                        <div class="stat-value">$18,600</div>
+                        <div class="stat-value" id="cost-team3">$18,600</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Home Games</div>
-                        <div class="stat-value" style="color: var(--accent-red);">6 × 4h ✈️</div>
+                        <div class="stat-value" id="home-team3" style="color: var(--accent-red);">6 × 4h ✈️</div>
                     </div>
                 </div>
             </div>
@@ -426,21 +517,21 @@
             <h2 class="section-title">Travel Map</h2>
             <div class="map-container">
                 <div class="map-tabs">
-                    <button class="map-tab all active" data-team="all">All Teams</button>
-                    <button class="map-tab ucla" data-team="ucla">UCLA</button>
-                    <button class="map-tab texas" data-team="texas">Texas</button>
-                    <button class="map-tab lsu" data-team="lsu">LSU</button>
+                    <button class="map-tab active" data-team="all">All Teams</button>
+                    <button class="map-tab" data-team="ucla">UCLA</button>
+                    <button class="map-tab" data-team="team2" id="map-tab-team2">Texas</button>
+                    <button class="map-tab" data-team="team3" id="map-tab-team3">LSU</button>
                 </div>
                 <div id="travelMap"></div>
                 <div class="map-legend">
-                    <div class="legend-item"><div class="legend-dot home"></div><span>Chatsworth, CA (Hometown)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background: #10b981;"></div><span>Chatsworth, CA (Hometown)</span></div>
                     <div class="legend-item"><div style="width: 20px; height: 3px; background: #9ca3af;"></div><span>Home Stadium (solid)</span></div>
                     <div class="legend-item"><div style="width: 20px; height: 2px; background: #9ca3af; border-style: dashed;"></div><span>Away Games (dashed)</span></div>
                 </div>
-                <div class="map-legend" style="margin-top: 0.5rem;">
-                    <div class="legend-item"><div class="legend-dot ucla"></div><span>UCLA (35 min to Pasadena)</span></div>
-                    <div class="legend-item"><div class="legend-dot texas"></div><span>Texas (3h flight to Austin)</span></div>
-                    <div class="legend-item"><div class="legend-dot lsu"></div><span>LSU (4h flight to Baton Rouge)</span></div>
+                <div class="map-legend" style="margin-top: 0.5rem;" id="map-legend-teams">
+                    <div class="legend-item"><div class="legend-dot" style="background: #2d68c4;"></div><span>UCLA</span></div>
+                    <div class="legend-item"><div class="legend-dot" id="legend-team2" style="background: #bf5700;"></div><span id="legend-name-team2">Texas</span></div>
+                    <div class="legend-item"><div class="legend-dot" id="legend-team3" style="background: #461d7c;"></div><span id="legend-name-team3">LSU</span></div>
                 </div>
             </div>
         </section>
@@ -476,37 +567,25 @@
             <div class="bar-comparison">
                 <div class="bar-label">
                     <span>Total Season Miles (incl. home games)</span>
-                    <span>UCLA: 6,892 · Texas: 22,280 · LSU: 29,140</span>
+                    <span id="bar-label-miles">UCLA: 6,892 · Texas: 22,280 · LSU: 29,140</span>
                 </div>
-                <div class="bar-track">
-                    <div class="bar-segment ucla" style="width: 12%">UCLA</div>
-                    <div class="bar-segment texas" style="width: 38%">Texas</div>
-                    <div class="bar-segment lsu" style="width: 50%">LSU</div>
-                </div>
+                <div class="bar-track" id="bar-miles"></div>
             </div>
             
             <div class="bar-comparison">
                 <div class="bar-label">
                     <span>Estimated Season Cost (2 people, all games)</span>
-                    <span>UCLA: $4,200 · Texas: $14,200 · LSU: $18,600</span>
+                    <span id="bar-label-cost">UCLA: $4,200 · Texas: $14,200 · LSU: $18,600</span>
                 </div>
-                <div class="bar-track">
-                    <div class="bar-segment ucla" style="width: 11%">UCLA</div>
-                    <div class="bar-segment texas" style="width: 38%">Texas</div>
-                    <div class="bar-segment lsu" style="width: 51%">LSU</div>
-                </div>
+                <div class="bar-track" id="bar-cost"></div>
             </div>
             
             <div class="bar-comparison">
                 <div class="bar-label">
                     <span>Flights Required (Round Trips)</span>
-                    <span>UCLA: 4 · Texas: 12 · LSU: 12</span>
+                    <span id="bar-label-flights">UCLA: 4 · Texas: 12 · LSU: 12</span>
                 </div>
-                <div class="bar-track">
-                    <div class="bar-segment ucla" style="width: 14%">UCLA</div>
-                    <div class="bar-segment texas" style="width: 43%">Texas</div>
-                    <div class="bar-segment lsu" style="width: 43%">LSU</div>
-                </div>
+                <div class="bar-track" id="bar-flights"></div>
             </div>
         </section>
 
@@ -514,8 +593,8 @@
             <h2 class="section-title">2026 Season Game Details</h2>
             <div class="schedule-tabs">
                 <button class="tab-btn active" data-school="ucla">UCLA</button>
-                <button class="tab-btn" data-school="texas">Texas</button>
-                <button class="tab-btn" data-school="lsu">LSU</button>
+                <button class="tab-btn" data-school="team2" id="sched-tab-team2">Texas</button>
+                <button class="tab-btn" data-school="team3" id="sched-tab-team3">LSU</button>
             </div>
             
             <div class="schedule-table" id="scheduleTable"></div>
@@ -526,68 +605,294 @@
         </footer>
     </div>
 
+    <script src="teams-data.js"></script>
     <script>
-        // Schedule data with full travel breakdown
-        const schedules = {
-            ucla: [
-                { date: 'Sep 5', opponent: 'California', location: 'Berkeley, CA', toAirport: '25 min to BUR', flight: '1h 15m', toStadium: '30 min from OAK', totalTime: '5h', cost: 450, type: 'away' },
-                { date: 'Sep 12', opponent: 'San Diego State', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Sep 19', opponent: 'Purdue', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Sep 26', opponent: 'Maryland', location: 'College Park, MD', toAirport: '45 min to LAX', flight: '5h', toStadium: '45 min from DCA', totalTime: '8.5h', cost: 1100, type: 'away' },
-                { date: 'Oct 10', opponent: 'Oregon', location: 'Eugene, OR', toAirport: '25 min to BUR', flight: '2h', toStadium: '15 min from EUG', totalTime: '5h', cost: 650, type: 'away' },
-                { date: 'Oct 17', opponent: 'Wisconsin', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Oct 24', opponent: 'Michigan State', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Oct 31', opponent: 'Nevada', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Nov 7', opponent: 'Minnesota', location: 'Minneapolis, MN', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '20 min from MSP', totalTime: '7h', cost: 950, type: 'away' },
-                { date: 'Nov 14', opponent: 'Illinois', location: 'Pasadena, CA', toAirport: '-', flight: '-', toStadium: '35 min drive', totalTime: '35 min', cost: 20, type: 'home' },
-                { date: 'Nov 21', opponent: 'USC', location: 'Los Angeles, CA', toAirport: '-', flight: '-', toStadium: '45 min drive', totalTime: '45 min', cost: 30, type: 'away' }
-            ],
-            texas: [
-                { date: 'Sep 5', opponent: 'Texas State', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Sep 12', opponent: 'Ohio State', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Sep 19', opponent: 'UTSA', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Sep 26', opponent: 'Tennessee', location: 'Knoxville, TN', toAirport: '45 min to LAX', flight: '4h (1 stop)', toStadium: '20 min from TYS', totalTime: '7.5h', cost: 1050, type: 'away' },
-                { date: 'Oct 10', opponent: 'Oklahoma', location: 'Dallas, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '30 min from DFW', totalTime: '6.5h', cost: 850, type: 'neutral' },
-                { date: 'Oct 17', opponent: 'Florida', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Oct 24', opponent: 'Ole Miss', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Oct 31', opponent: 'Mississippi State', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Nov 7', opponent: 'Missouri', location: 'Columbia, MO', toAirport: '45 min to LAX', flight: '4h (1 stop)', toStadium: '30 min from STL', totalTime: '7.5h', cost: 900, type: 'away' },
-                { date: 'Nov 14', opponent: 'LSU', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'away' },
-                { date: 'Nov 21', opponent: 'Arkansas', location: 'Austin, TX', toAirport: '45 min to LAX', flight: '3h', toStadium: '20 min from AUS', totalTime: '6h', cost: 850, type: 'home' },
-                { date: 'Nov 27', opponent: 'Texas A&M', location: 'College Station, TX', toAirport: '45 min to LAX', flight: '3h (1 stop)', toStadium: '15 min from CLL', totalTime: '6.5h', cost: 850, type: 'away' }
-            ],
-            lsu: [
-                { date: 'Sep 5', opponent: 'Clemson', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Sep 12', opponent: 'Louisiana Tech', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Sep 19', opponent: 'Ole Miss', location: 'Oxford, MS', toAirport: '45 min to LAX', flight: '4h (1 stop)', toStadium: '1h 20m from MEM', totalTime: '8h', cost: 980, type: 'away' },
-                { date: 'Sep 26', opponent: 'Texas A&M', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Oct 3', opponent: 'McNeese State', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Oct 10', opponent: 'Kentucky', location: 'Lexington, KY', toAirport: '45 min to LAX', flight: '4h 30m (1 stop)', toStadium: '15 min from LEX', totalTime: '8h', cost: 1100, type: 'away' },
-                { date: 'Oct 17', opponent: 'Mississippi State', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Oct 24', opponent: 'Auburn', location: 'Auburn, AL', toAirport: '45 min to LAX', flight: '4h (1 stop)', toStadium: '1h 30m from ATL', totalTime: '8.5h', cost: 1050, type: 'away' },
-                { date: 'Nov 7', opponent: 'Alabama', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Nov 14', opponent: 'Texas', location: 'Baton Rouge, LA', toAirport: '45 min to LAX', flight: '3h 30m', toStadium: '15 min from BTR', totalTime: '6.5h', cost: 950, type: 'home' },
-                { date: 'Nov 21', opponent: 'Tennessee', location: 'Knoxville, TN', toAirport: '45 min to LAX', flight: '4h 30m (1 stop)', toStadium: '20 min from TYS', totalTime: '8h', cost: 1100, type: 'away' },
-                { date: 'Nov 28', opponent: 'Arkansas', location: 'Fayetteville, AR', toAirport: '45 min to LAX', flight: '4h (1 stop)', toStadium: '30 min from XNA', totalTime: '7.5h', cost: 920, type: 'away' }
-            ]
+        // State
+        let selectedTeams = {
+            ucla: 'ucla',
+            team2: 'texas',
+            team3: 'lsu'
         };
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderSchedule(btn.dataset.school);
-            });
+        
+        // Chart instances (for updates)
+        let charts = {};
+        
+        // Home location
+        const HOME = { lat: 34.2572, lng: -118.6006 };
+        
+        // Map state
+        let map = null;
+        let teamLayers = {};
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            initCharts();
+            updateAllDisplays();
+            setupScheduleTabs();
+            setupMapTabs();
         });
-
-        function renderSchedule(school) {
-            const schedule = schedules[school];
-            const totalCost = schedule.reduce((sum, g) => sum + g.cost, 0);
-            const flightGames = schedule.filter(g => g.flight !== '-').length;
+        
+        function updateTeam(slot, teamId) {
+            selectedTeams[slot] = teamId;
+            updateAllDisplays();
+            updateMap();
+        }
+        
+        function updateAllDisplays() {
+            // Update cards for team2 and team3
+            ['team2', 'team3'].forEach(slot => {
+                const teamId = selectedTeams[slot];
+                const team = TEAMS[teamId];
+                const stats = calculateTeamStats(teamId);
+                
+                document.getElementById(`logo-${slot}`).textContent = team.abbr;
+                document.getElementById(`logo-${slot}`).style.background = team.color;
+                document.getElementById(`name-${slot}`).textContent = `${team.name} ${team.mascot}`;
+                document.getElementById(`conf-${slot}`).textContent = team.conference;
+                
+                const scoreEl = document.getElementById(`score-${slot}`);
+                scoreEl.textContent = stats.miseryScore;
+                scoreEl.className = 'misery-value ' + (stats.miseryScore < 40 ? 'low' : stats.miseryScore < 70 ? 'medium' : 'high');
+                
+                document.getElementById(`miles-${slot}`).textContent = stats.totalMiles.toLocaleString();
+                document.getElementById(`flights-${slot}`).textContent = stats.flights;
+                document.getElementById(`cost-${slot}`).textContent = '$' + stats.totalCost.toLocaleString();
+                
+                const homeInfo = getHomeGameInfo(teamId);
+                const homeEl = document.getElementById(`home-${slot}`);
+                homeEl.textContent = homeInfo.text;
+                homeEl.style.color = homeInfo.color;
+                
+                // Update tab labels
+                document.getElementById(`map-tab-${slot}`).textContent = team.name;
+                document.getElementById(`sched-tab-${slot}`).textContent = team.name;
+                document.getElementById(`legend-${slot}`).style.background = team.color;
+                document.getElementById(`legend-name-${slot}`).textContent = team.name;
+            });
+            
+            updateCharts();
+            updateComparisonBars();
+            renderSchedule('ucla'); // Reset to UCLA schedule
+        }
+        
+        function calculateTeamStats(teamId) {
+            const schedule = SCHEDULES[teamId];
+            if (!schedule) return { totalMiles: 0, totalCost: 0, flights: 0, miseryScore: 0 };
+            
+            let totalMiles = 0;
+            let totalCost = 0;
+            let flights = 0;
+            
+            schedule.forEach(game => {
+                const location = STADIUMS[game.location];
+                if (location) {
+                    totalMiles += location.distance * 2;
+                    totalCost += location.cost;
+                    if (location.distance > 100) flights++;
+                }
+            });
+            
+            // Gentler scoring - 100 = worst case scenario (40k+ miles, $25k+ cost, 15+ flights)
+            const miseryScore = Math.min(100, Math.round(
+                (totalMiles / 40000 * 35) + 
+                (totalCost / 25000 * 35) + 
+                (flights / 15 * 30)
+            ));
+            
+            return { totalMiles, totalCost, flights, miseryScore };
+        }
+        
+        function getHomeGameInfo(teamId) {
+            const stadium = STADIUMS[teamId];
+            if (!stadium) return { text: '-', color: 'var(--text-secondary)' };
+            
+            if (stadium.distance < 100) {
+                return { text: `${stadium.totalTime} 🚗`, color: 'var(--accent-green)' };
+            } else {
+                const schedule = SCHEDULES[teamId];
+                const homeGames = schedule ? schedule.filter(g => g.type === 'home').length : 0;
+                const flightTime = stadium.flight || '?h';
+                return { 
+                    text: `${homeGames} × ${flightTime.replace(' (1 stop)', '')} ✈️`, 
+                    color: stadium.distance > 1700 ? 'var(--accent-red)' : 'var(--accent-yellow)' 
+                };
+            }
+        }
+        
+        // ==================== CHARTS ====================
+        function initCharts() {
+            const chartColors = ['rgba(45, 104, 196, 0.8)', 'rgba(191, 87, 0, 0.8)', 'rgba(70, 29, 124, 0.8)'];
+            
+            charts.misery = new Chart(document.getElementById('miseryChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['UCLA', 'Texas', 'LSU'],
+                    datasets: [{ label: 'Misery Score', data: [24, 78, 92], backgroundColor: chartColors, borderRadius: 6 }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+            
+            charts.cost = new Chart(document.getElementById('costChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['UCLA', 'Texas', 'LSU'],
+                    datasets: [
+                        { label: 'Home Games', data: [120, 5950, 5700], backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 4 },
+                        { label: 'Away Games', data: [3150, 4600, 5150], backgroundColor: 'rgba(239, 68, 68, 0.8)', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { stacked: true, beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => '$' + v.toLocaleString() } },
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+            
+            charts.distance = new Chart(document.getElementById('distanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Home Games', 'Away Games'],
+                    datasets: [
+                        { label: 'UCLA', data: [150, 5345], backgroundColor: chartColors[0], borderRadius: 4 },
+                        { label: 'Texas', data: [9800, 8380], backgroundColor: chartColors[1], borderRadius: 4 },
+                        { label: 'LSU', data: [10800, 9930], backgroundColor: chartColors[2], borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => v.toLocaleString() + ' mi' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+            
+            charts.flights = new Chart(document.getElementById('timeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['UCLA (4)', 'Texas (12)', 'LSU (12)'],
+                    datasets: [{ data: [4, 12, 12], backgroundColor: chartColors, borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }
+                }
+            });
+        }
+        
+        function updateCharts() {
+            const teams = ['ucla', selectedTeams.team2, selectedTeams.team3];
+            const stats = teams.map(t => calculateTeamStats(t));
+            const names = teams.map(t => TEAMS[t].name);
+            const colors = [TEAMS.ucla.color, TEAMS[selectedTeams.team2].color, TEAMS[selectedTeams.team3].color].map(c => c + 'cc');
+            
+            // Update misery chart
+            charts.misery.data.labels = names;
+            charts.misery.data.datasets[0].data = stats.map(s => s.miseryScore);
+            charts.misery.data.datasets[0].backgroundColor = colors;
+            charts.misery.update();
+            
+            // Update cost chart
+            charts.cost.data.labels = names;
+            const homeCosts = teams.map(t => {
+                const schedule = SCHEDULES[t];
+                if (!schedule) return 0;
+                return schedule.filter(g => g.type === 'home').reduce((sum, g) => sum + (STADIUMS[g.location]?.cost || 0), 0);
+            });
+            const awayCosts = teams.map(t => {
+                const schedule = SCHEDULES[t];
+                if (!schedule) return 0;
+                return schedule.filter(g => g.type !== 'home').reduce((sum, g) => sum + (STADIUMS[g.location]?.cost || 0), 0);
+            });
+            charts.cost.data.datasets[0].data = homeCosts;
+            charts.cost.data.datasets[1].data = awayCosts;
+            charts.cost.update();
+            
+            // Update distance chart
+            charts.distance.data.datasets.forEach((ds, i) => {
+                ds.label = names[i];
+                ds.backgroundColor = colors[i];
+                const schedule = SCHEDULES[teams[i]];
+                if (schedule) {
+                    const homeMiles = schedule.filter(g => g.type === 'home').reduce((sum, g) => sum + (STADIUMS[g.location]?.distance || 0) * 2, 0);
+                    const awayMiles = schedule.filter(g => g.type !== 'home').reduce((sum, g) => sum + (STADIUMS[g.location]?.distance || 0) * 2, 0);
+                    ds.data = [homeMiles, awayMiles];
+                }
+            });
+            charts.distance.update();
+            
+            // Update flights chart
+            charts.flights.data.labels = names.map((n, i) => `${n} (${stats[i].flights})`);
+            charts.flights.data.datasets[0].data = stats.map(s => s.flights);
+            charts.flights.data.datasets[0].backgroundColor = colors;
+            charts.flights.update();
+        }
+        
+        function updateComparisonBars() {
+            const teams = ['ucla', selectedTeams.team2, selectedTeams.team3];
+            const stats = teams.map(t => calculateTeamStats(t));
+            const names = teams.map(t => TEAMS[t].name);
+            const colors = [TEAMS.ucla.color, TEAMS[selectedTeams.team2].color, TEAMS[selectedTeams.team3].color];
+            
+            // Miles bar
+            const totalMiles = stats.reduce((sum, s) => sum + s.totalMiles, 0);
+            document.getElementById('bar-label-miles').textContent = names.map((n, i) => `${n}: ${stats[i].totalMiles.toLocaleString()}`).join(' · ');
+            document.getElementById('bar-miles').innerHTML = stats.map((s, i) => 
+                `<div class="bar-segment" style="width: ${(s.totalMiles / totalMiles * 100).toFixed(0)}%; background: ${colors[i]};">${names[i]}</div>`
+            ).join('');
+            
+            // Cost bar
+            const totalCost = stats.reduce((sum, s) => sum + s.totalCost, 0);
+            document.getElementById('bar-label-cost').textContent = names.map((n, i) => `${n}: $${stats[i].totalCost.toLocaleString()}`).join(' · ');
+            document.getElementById('bar-cost').innerHTML = stats.map((s, i) => 
+                `<div class="bar-segment" style="width: ${(s.totalCost / totalCost * 100).toFixed(0)}%; background: ${colors[i]};">${names[i]}</div>`
+            ).join('');
+            
+            // Flights bar
+            const totalFlights = stats.reduce((sum, s) => sum + s.flights, 0);
+            document.getElementById('bar-label-flights').textContent = names.map((n, i) => `${n}: ${stats[i].flights}`).join(' · ');
+            document.getElementById('bar-flights').innerHTML = stats.map((s, i) => 
+                `<div class="bar-segment" style="width: ${(s.flights / totalFlights * 100).toFixed(0)}%; background: ${colors[i]};">${names[i]}</div>`
+            ).join('');
+        }
+        
+        // ==================== SCHEDULE ====================
+        function setupScheduleTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const school = btn.dataset.school;
+                    const teamId = school === 'ucla' ? 'ucla' : selectedTeams[school];
+                    renderSchedule(teamId);
+                });
+            });
+        }
+        
+        function renderSchedule(teamId) {
+            const schedule = SCHEDULES[teamId];
+            if (!schedule) {
+                document.getElementById('scheduleTable').innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">Schedule not available</div>';
+                return;
+            }
+            
+            let totalCost = 0;
+            let flights = 0;
             
             let html = `
-                <div class="schedule-row header" style="grid-template-columns: 80px 1fr 100px 100px 90px 90px 80px;">
+                <div class="schedule-row header">
                     <div>Date</div>
                     <div>Opponent</div>
                     <div>To Airport</div>
@@ -599,11 +904,19 @@
             `;
             
             schedule.forEach(game => {
-                const isLocal = game.flight === '-';
-                const totalHours = parseFloat(game.totalTime) || 0;
+                const location = STADIUMS[game.location];
+                if (!location) return;
+                
+                const isLocal = location.distance < 100;
+                totalCost += location.cost;
+                if (!isLocal) flights++;
+                
+                const toAirport = isLocal ? '-' : '45 min to LAX';
+                const totalTime = location.totalTime || '-';
+                const totalHours = parseFloat(totalTime) || 0;
                 
                 html += `
-                    <div class="schedule-row" style="grid-template-columns: 80px 1fr 100px 100px 90px 90px 80px; ${isLocal ? 'opacity: 0.7;' : ''}">
+                    <div class="schedule-row" style="${isLocal ? 'opacity: 0.7;' : ''}">
                         <div>${game.date}</div>
                         <div class="opponent-cell">
                             ${game.type === 'away' ? '<span class="away-badge">AWAY</span>' : 
@@ -611,20 +924,20 @@
                               '<span class="home-badge">HOME</span>'}
                             ${game.opponent}
                         </div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">${game.toAirport}</div>
-                        <div style="font-size: 0.75rem;">${game.flight}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">${game.toStadium}</div>
-                        <div style="font-weight: 600; color: ${isLocal ? 'var(--accent-green)' : totalHours > 7 ? 'var(--accent-red)' : 'var(--accent-yellow)'};">${game.totalTime}</div>
-                        <div>$${game.cost.toLocaleString()}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">${toAirport}</div>
+                        <div style="font-size: 0.75rem;">${location.flight || '-'}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">${location.toStadium || '-'}</div>
+                        <div style="font-weight: 600; color: ${isLocal ? 'var(--accent-green)' : totalHours > 7 ? 'var(--accent-red)' : 'var(--accent-yellow)'};">${totalTime}</div>
+                        <div>$${location.cost}</div>
                     </div>
                 `;
             });
             
             html += `
-                <div class="schedule-row" style="grid-template-columns: 80px 1fr 100px 100px 90px 90px 80px; background: var(--bg-secondary); font-weight: 600;">
+                <div class="schedule-row" style="background: var(--bg-secondary); font-weight: 600;">
                     <div></div>
                     <div>SEASON TOTAL</div>
-                    <div style="grid-column: span 3; text-align: center;">${flightGames} flights required</div>
+                    <div style="grid-column: span 3; text-align: center;">${flights} flights required</div>
                     <div></div>
                     <div>$${totalCost.toLocaleString()}</div>
                 </div>
@@ -632,54 +945,89 @@
             
             document.getElementById('scheduleTable').innerHTML = html;
         }
-
-        // Initialize
-        renderSchedule('ucla');
-
+        
         // ==================== MAP ====================
-        const home = { lat: 34.2572, lng: -118.6006 };
+        function initMap() {
+            map = L.map('travelMap', { center: [38, -98], zoom: 4, attributionControl: false });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+            
+            // Home marker
+            const homeIcon = L.divIcon({
+                html: '<div style="width: 16px; height: 16px; background: #10b981; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></div>',
+                iconSize: [16, 16], iconAnchor: [8, 8]
+            });
+            L.marker([HOME.lat, HOME.lng], { icon: homeIcon }).bindPopup('<strong>Chatsworth, CA</strong><br>Hometown').addTo(map);
+            
+            updateMap();
+        }
         
-        const homeStadiums = {
-            ucla: { lat: 34.1614, lng: -118.1676, name: 'Rose Bowl (Pasadena)' },
-            texas: { lat: 30.2849, lng: -97.7341, name: 'DKR Stadium (Austin)' },
-            lsu: { lat: 30.4121, lng: -91.1837, name: 'Tiger Stadium (Baton Rouge)' }
-        };
+        function setupMapTabs() {
+            document.querySelectorAll('.map-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const team = tab.dataset.team;
+                    
+                    Object.keys(teamLayers).forEach(t => {
+                        if (team === 'all' || t === team) {
+                            map.addLayer(teamLayers[t]);
+                        } else {
+                            map.removeLayer(teamLayers[t]);
+                        }
+                    });
+                });
+            });
+        }
         
-        const awayGames = {
-            ucla: [
-                { lat: 37.8716, lng: -122.2727, name: 'California (Berkeley)' },
-                { lat: 38.9897, lng: -76.9378, name: 'Maryland (College Park)' },
-                { lat: 44.0583, lng: -123.0689, name: 'Oregon (Eugene)' },
-                { lat: 44.9740, lng: -93.2277, name: 'Minnesota (Minneapolis)' }
-            ],
-            texas: [
-                { lat: 35.9606, lng: -83.9207, name: 'Tennessee (Knoxville)' },
-                { lat: 32.7767, lng: -96.7970, name: 'Oklahoma @ Dallas' },
-                { lat: 38.9517, lng: -92.3341, name: 'Missouri (Columbia)' },
-                { lat: 30.4113, lng: -91.1860, name: 'LSU (Baton Rouge)' },
-                { lat: 30.6280, lng: -96.3344, name: 'Texas A&M (College Station)' }
-            ],
-            lsu: [
-                { lat: 34.3668, lng: -89.5186, name: 'Ole Miss (Oxford)' },
-                { lat: 38.0406, lng: -84.5037, name: 'Kentucky (Lexington)' },
-                { lat: 32.6030, lng: -85.4875, name: 'Auburn' },
-                { lat: 35.9606, lng: -83.9207, name: 'Tennessee (Knoxville)' },
-                { lat: 36.0822, lng: -94.1719, name: 'Arkansas (Fayetteville)' }
-            ]
-        };
-        
-        const teamColors = { ucla: '#2d68c4', texas: '#bf5700', lsu: '#9b59b6' };
-        
-        const map = L.map('travelMap', { center: [38, -98], zoom: 4, attributionControl: false });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-        
-        const homeIcon = L.divIcon({
-            html: '<div style="width: 16px; height: 16px; background: #10b981; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></div>',
-            iconSize: [16, 16], iconAnchor: [8, 8]
-        });
-        L.marker([home.lat, home.lng], { icon: homeIcon }).bindPopup('<strong>Chatsworth, CA</strong><br>Hometown').addTo(map);
-        
-        const teamLayers = { ucla: L.layerGroup(), texas: L.layerGroup(), lsu: L.layerGroup() };
+        function updateMap() {
+            // Clear existing layers
+            Object.values(teamLayers).forEach(layer => map.removeLayer(layer));
+            teamLayers = {};
+            
+            const teams = { ucla: 'ucla', team2: selectedTeams.team2, team3: selectedTeams.team3 };
+            
+            Object.entries(teams).forEach(([slot, teamId]) => {
+                const team = TEAMS[teamId];
+                const schedule = SCHEDULES[teamId];
+                const homeStadium = STADIUMS[teamId];
+                if (!team || !schedule || !homeStadium) return;
+                
+                const color = team.color;
+                const layer = L.layerGroup();
+                const isLocal = homeStadium.distance < 100;
+                
+                // Home stadium line
+                if (homeStadium.lat) {
+                    layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [homeStadium.lat, homeStadium.lng], 20), 
+                        { color, weight: isLocal ? 2 : 4, opacity: isLocal ? 0.4 : 0.8 }));
+                    
+                    const stadiumIcon = L.divIcon({
+                        html: `<div style="width: ${isLocal ? 12 : 16}px; height: ${isLocal ? 12 : 16}px; background: ${color}; border-radius: 3px; border: 2px solid #fff; transform: rotate(45deg);"></div>`,
+                        iconSize: [16, 16], iconAnchor: [8, 8]
+                    });
+                    layer.addLayer(L.marker([homeStadium.lat, homeStadium.lng], { icon: stadiumIcon }).bindPopup(`<strong>${homeStadium.name}</strong><br>Home Stadium`));
+                }
+                
+                // Away games
+                schedule.forEach(game => {
+                    if (game.type === 'home') return;
+                    const location = STADIUMS[game.location];
+                    if (!location || !location.lat) return;
+                    
+                    layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [location.lat, location.lng], 20), 
+                        { color, weight: 2, opacity: 0.6, dashArray: '5, 10' }));
+                    
+                    const destIcon = L.divIcon({
+                        html: `<div style="width: 10px; height: 10px; background: ${color}; border-radius: 50%; border: 2px solid #fff;"></div>`,
+                        iconSize: [10, 10], iconAnchor: [5, 5]
+                    });
+                    layer.addLayer(L.marker([location.lat, location.lng], { icon: destIcon }).bindPopup(`<strong>${location.name}</strong><br>Away Game`));
+                });
+                
+                teamLayers[slot] = layer;
+                layer.addTo(map);
+            });
+        }
         
         function createArc(start, end, n) {
             const pts = [];
@@ -691,135 +1039,6 @@
             }
             return pts;
         }
-        
-        Object.keys(awayGames).forEach(team => {
-            const color = teamColors[team];
-            const stadium = homeStadiums[team];
-            const isLocal = team === 'ucla';
-            
-            // Home stadium line
-            teamLayers[team].addLayer(L.polyline(createArc([home.lat, home.lng], [stadium.lat, stadium.lng], 20), 
-                { color, weight: isLocal ? 2 : 4, opacity: isLocal ? 0.4 : 0.8 }));
-            
-            const stadiumIcon = L.divIcon({
-                html: `<div style="width: ${isLocal ? 12 : 16}px; height: ${isLocal ? 12 : 16}px; background: ${color}; border-radius: 3px; border: 2px solid #fff; transform: rotate(45deg);"></div>`,
-                iconSize: [16, 16], iconAnchor: [8, 8]
-            });
-            teamLayers[team].addLayer(L.marker([stadium.lat, stadium.lng], { icon: stadiumIcon }).bindPopup(`<strong>${stadium.name}</strong><br>Home Stadium`));
-            
-            // Away games
-            awayGames[team].forEach(game => {
-                teamLayers[team].addLayer(L.polyline(createArc([home.lat, home.lng], [game.lat, game.lng], 20), 
-                    { color, weight: 2, opacity: 0.6, dashArray: '5, 10' }));
-                
-                const destIcon = L.divIcon({
-                    html: `<div style="width: 10px; height: 10px; background: ${color}; border-radius: 50%; border: 2px solid #fff;"></div>`,
-                    iconSize: [10, 10], iconAnchor: [5, 5]
-                });
-                teamLayers[team].addLayer(L.marker([game.lat, game.lng], { icon: destIcon }).bindPopup(`<strong>${game.name}</strong><br>Away Game`));
-            });
-            
-            teamLayers[team].addTo(map);
-        });
-        
-        document.querySelectorAll('.map-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const team = tab.dataset.team;
-                Object.keys(teamLayers).forEach(t => {
-                    team === 'all' || t === team ? map.addLayer(teamLayers[t]) : map.removeLayer(teamLayers[t]);
-                });
-            });
-        });
-
-        // ==================== CHARTS ====================
-        const chartColors = {
-            ucla: 'rgba(45, 104, 196, 0.8)',
-            texas: 'rgba(191, 87, 0, 0.8)',
-            lsu: 'rgba(155, 89, 182, 0.8)'
-        };
-
-        // Misery Score Chart
-        new Chart(document.getElementById('miseryChart'), {
-            type: 'bar',
-            data: {
-                labels: ['UCLA', 'Texas', 'LSU'],
-                datasets: [{
-                    label: 'Misery Score',
-                    data: [24, 78, 92],
-                    backgroundColor: [chartColors.ucla, chartColors.texas, chartColors.lsu],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
-                }
-            }
-        });
-
-        // Cost by Game Type Chart
-        new Chart(document.getElementById('costChart'), {
-            type: 'bar',
-            data: {
-                labels: ['UCLA', 'Texas', 'LSU'],
-                datasets: [
-                    { label: 'Home Games', data: [120, 5950, 5700], backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 4 },
-                    { label: 'Away Games', data: [3150, 4600, 5150], backgroundColor: 'rgba(239, 68, 68, 0.8)', borderRadius: 4 },
-                    { label: 'Neutral Site', data: [0, 850, 0], backgroundColor: 'rgba(245, 158, 11, 0.8)', borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { labels: { color: '#9ca3af' } } },
-                scales: {
-                    y: { stacked: true, beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => '$' + v.toLocaleString() } },
-                    x: { stacked: true, grid: { display: false }, ticks: { color: '#9ca3af' } }
-                }
-            }
-        });
-
-        // Miles by Game Type Chart
-        new Chart(document.getElementById('distanceChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Home Games', 'Away Games', 'Avg per Game'],
-                datasets: [
-                    { label: 'UCLA', data: [150, 5345, 495], backgroundColor: chartColors.ucla, borderRadius: 4 },
-                    { label: 'Texas', data: [9800, 8380, 1523], backgroundColor: chartColors.texas, borderRadius: 4 },
-                    { label: 'LSU', data: [10800, 9930, 1728], backgroundColor: chartColors.lsu, borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { labels: { color: '#9ca3af' } } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => v.toLocaleString() + ' mi' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
-                }
-            }
-        });
-
-        // Flights Required Chart
-        new Chart(document.getElementById('timeChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['UCLA (4 flights)', 'Texas (12 flights)', 'LSU (12 flights)'],
-                datasets: [{
-                    data: [4, 12, 12],
-                    backgroundColor: [chartColors.ucla, chartColors.texas, chartColors.lsu],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }
-            }
-        });
     </script>
 </body>
 </html>
