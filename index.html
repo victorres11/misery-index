@@ -74,36 +74,43 @@
         
         #hometown-search {
             position: relative;
-            min-width: 200px;
+            min-width: 220px;
+        }
+        
+        /* Mapbox SearchBox styling overrides for dark theme */
+        #hometown-search mapbox-search-box {
+            --search-box-background: transparent;
+            --search-box-text-color: #fff;
+            --search-box-font-family: inherit;
+            --search-box-font-size: 0.95rem;
+            --search-box-input-padding: 0.25rem 0;
+            --search-box-border: none;
+            --search-box-box-shadow: none;
+            font-weight: 600;
         }
         
         #hometown-search input {
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            font-weight: 600;
-            outline: none;
-            width: 100%;
-            padding: 0.25rem 0;
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-primary) !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            box-shadow: none !important;
+            padding: 0.25rem 0 !important;
         }
         
-        #hometown-search input::placeholder {
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-        
-        /* Mapbox search suggestions styling */
-        .mapboxgl-ctrl-geocoder {
+        /* Results dropdown */
+        .mapboxgl-ctrl-geocoder, .suggestions-wrapper, [class*="SearchBox"] {
             background: var(--bg-card) !important;
             border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
         }
         
-        .mapboxgl-ctrl-geocoder--suggestion {
+        .mapboxgl-ctrl-geocoder--suggestion, [class*="Suggestion"] {
             color: var(--text-primary) !important;
         }
         
-        .mapboxgl-ctrl-geocoder--suggestion:hover {
+        .mapboxgl-ctrl-geocoder--suggestion:hover, [class*="Suggestion"]:hover {
             background: var(--bg-secondary) !important;
         }
         
@@ -724,38 +731,27 @@
         
         // Initialize Mapbox search
         function initSearch() {
-            const searchBox = document.createElement('input');
-            searchBox.type = 'text';
-            searchBox.id = 'hometown-input';
-            searchBox.placeholder = 'Search city...';
-            searchBox.value = HOME.name;
-            
-            document.getElementById('hometown-search').appendChild(searchBox);
-            
-            // Initialize Mapbox SearchBox
-            const search = new mapboxsearch.MapboxSearchBox();
-            search.accessToken = MAPBOX_TOKEN;
-            search.options = {
-                types: 'place,locality,neighborhood',
+            const searchBox = document.createElement('mapbox-search-box');
+            searchBox.accessToken = MAPBOX_TOKEN;
+            searchBox.options = {
+                types: 'place,locality',
                 country: 'US',
                 limit: 5
             };
+            searchBox.value = HOME.name;
+            searchBox.placeholder = 'Enter city...';
             
-            // Attach to our input
-            search.bindInput(searchBox);
+            document.getElementById('hometown-search').appendChild(searchBox);
             
             // Handle selection
-            search.addEventListener('retrieve', (e) => {
+            searchBox.addEventListener('retrieve', (e) => {
                 const feature = e.detail.features[0];
                 if (feature) {
                     HOME = {
                         lat: feature.geometry.coordinates[1],
                         lng: feature.geometry.coordinates[0],
-                        name: feature.properties.name_preferred || feature.properties.name
+                        name: feature.properties.name_preferred || feature.properties.name || feature.properties.place_name
                     };
-                    
-                    // Update the input to show selected name
-                    searchBox.value = HOME.name;
                     
                     // Update legend and subtitle
                     document.getElementById('legend-hometown').textContent = `${HOME.name} (Hometown)`;
