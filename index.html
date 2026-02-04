@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Using Mapbox Geocoding API directly -->
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -51,18 +52,91 @@
         
         .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
         
-        .hometown-badge {
+        .hometown-selector {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             background: var(--bg-card);
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 9999px;
             margin-top: 1rem;
             border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
         }
         
-        .hometown-badge svg { width: 18px; height: 18px; color: var(--accent-blue); }
+        .hometown-selector:focus-within {
+            border-color: var(--accent-blue);
+        }
+        
+        .hometown-selector svg { width: 18px; height: 18px; color: var(--accent-blue); flex-shrink: 0; }
+        
+        .hometown-selector label { font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; }
+        
+        #hometown-search {
+            position: relative;
+            min-width: 200px;
+        }
+        
+        #hometown-input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+            padding: 0.25rem 0;
+        }
+        
+        #hometown-input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        
+        #hometown-suggestions {
+            position: absolute;
+            top: 100%;
+            left: -1rem;
+            right: -1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        #hometown-suggestions.show {
+            display: block;
+        }
+        
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .suggestion-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .suggestion-item .city-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .suggestion-item .city-region {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
+        }
         
         .summary-grid {
             display: grid;
@@ -322,12 +396,16 @@
         <header>
             <h1>Misery Index</h1>
             <p class="subtitle">How painful is it for your family to follow you?</p>
-            <div class="hometown-badge">
+            <div class="hometown-selector">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Hometown: <strong>Chatsworth, CA</strong></span>
+                <label>Hometown:</label>
+                <div id="hometown-search">
+                    <input type="text" id="hometown-input" placeholder="Search city..." autocomplete="off">
+                    <div id="hometown-suggestions"></div>
+                </div>
             </div>
         </header>
 
@@ -524,7 +602,7 @@
                 </div>
                 <div id="travelMap"></div>
                 <div class="map-legend">
-                    <div class="legend-item"><div class="legend-dot" style="background: #10b981;"></div><span>Chatsworth, CA (Hometown)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background: #10b981;"></div><span id="legend-hometown">Chatsworth, CA (Hometown)</span></div>
                     <div class="legend-item"><div style="width: 20px; height: 3px; background: #9ca3af;"></div><span>Home Stadium (solid)</span></div>
                     <div class="legend-item"><div style="width: 20px; height: 2px; background: #9ca3af; border-style: dashed;"></div><span>Away Games (dashed)</span></div>
                 </div>
@@ -561,7 +639,7 @@
         <section class="comparison-section">
             <div class="comparison-header">
                 <div class="comparison-title">Head-to-Head Comparison</div>
-                <div class="comparison-subtitle">Based on 2026 season schedules from Chatsworth, CA</div>
+                <div class="comparison-subtitle" id="comparison-subtitle">Based on 2026 season schedules from Chatsworth, CA</div>
             </div>
             
             <div class="bar-comparison">
@@ -601,12 +679,15 @@
         </section>
 
         <footer>
-            <p>Misery Index Prototype · Data based on 2026 schedules · Costs are estimates for 2 people (flights + 1 night hotel)</p>
+            <p>Misery Index · Data based on 2026 schedules · Costs are estimates for 2 people (flights + 1 night hotel) · Distances calculated from your selected hometown</p>
         </footer>
     </div>
 
     <script src="teams-data.js"></script>
     <script>
+        // Mapbox access token
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoidmljdG9ycmVzMTEiLCJhIjoiY21sN2M0dWc3MG9lOTNlcHoxa3FkaGhjbiJ9.PkRTWvakSvzEx_46W3ygFQ';
+        
         // State
         let selectedTeams = {
             ucla: 'ucla',
@@ -617,15 +698,187 @@
         // Chart instances (for updates)
         let charts = {};
         
-        // Home location
-        const HOME = { lat: 34.2572, lng: -118.6006 };
+        // Home location (mutable - will update when user searches)
+        let HOME = { lat: 34.2572, lng: -118.6006, name: 'Chatsworth, CA' };
         
         // Map state
         let map = null;
         let teamLayers = {};
+        let homeMarker = null;
+        
+        // Haversine formula to calculate distance between two lat/lng points
+        function haversineDistance(lat1, lng1, lat2, lng2) {
+            const R = 3959; // Earth's radius in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.round(R * c);
+        }
+        
+        // Estimate cost based on distance (rough approximation)
+        function estimateCost(distance) {
+            if (distance < 50) return 20; // Local drive
+            if (distance < 150) return 60; // Day trip drive
+            if (distance < 400) return 300; // Short flight
+            if (distance < 800) return 500; // Medium flight
+            if (distance < 1200) return 700; // Longer flight
+            if (distance < 1800) return 900; // Cross-country
+            return 1100; // Far cross-country with connections
+        }
+        
+        // Estimate travel time based on distance
+        function estimateTravelTime(distance) {
+            if (distance < 50) return `${Math.round(distance * 1.5)} min`;
+            if (distance < 150) return `${(distance / 50).toFixed(1)}h drive`;
+            // Flight: 2h airport buffer + flight time (500mph avg) + 30min to stadium
+            const flightHours = distance / 500;
+            const totalHours = 2 + flightHours + 0.5;
+            return `${totalHours.toFixed(1)}h`;
+        }
+        
+        // Check if flight is needed
+        function needsFlight(distance) {
+            return distance > 150;
+        }
+        
+        // Recalculate all stadium distances from current HOME
+        function recalculateDistances() {
+            Object.keys(STADIUMS).forEach(key => {
+                const stadium = STADIUMS[key];
+                if (stadium.lat && stadium.lng) {
+                    stadium.distance = haversineDistance(HOME.lat, HOME.lng, stadium.lat, stadium.lng);
+                    stadium.cost = estimateCost(stadium.distance);
+                    stadium.totalTime = estimateTravelTime(stadium.distance);
+                }
+            });
+        }
+        
+        // Initialize Mapbox search
+        let searchTimeout = null;
+        
+        function initSearch() {
+            const input = document.getElementById('hometown-input');
+            const suggestions = document.getElementById('hometown-suggestions');
+            
+            // Set initial value
+            input.value = HOME.name;
+            
+            // Debounced search on input
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                
+                if (searchTimeout) clearTimeout(searchTimeout);
+                
+                if (query.length < 2) {
+                    suggestions.classList.remove('show');
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => searchCities(query), 300);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#hometown-search')) {
+                    suggestions.classList.remove('show');
+                }
+            });
+            
+            // Show suggestions on focus if there's a query
+            input.addEventListener('focus', () => {
+                if (input.value.trim().length >= 2 && suggestions.children.length > 0) {
+                    suggestions.classList.add('show');
+                }
+            });
+        }
+        
+        async function searchCities(query) {
+            const suggestions = document.getElementById('hometown-suggestions');
+            
+            try {
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+                    `access_token=${MAPBOX_TOKEN}&types=place,locality&country=US&limit=5`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    suggestions.innerHTML = data.features.map(feature => {
+                        const placeName = feature.place_name.split(',');
+                        const city = placeName[0];
+                        const region = placeName.slice(1).join(',').trim();
+                        
+                        return `
+                            <div class="suggestion-item" data-lat="${feature.center[1]}" data-lng="${feature.center[0]}" data-name="${city}">
+                                <div class="city-name">${city}</div>
+                                <div class="city-region">${region}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Add click handlers
+                    suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                        item.addEventListener('click', () => selectCity(item));
+                    });
+                    
+                    suggestions.classList.add('show');
+                } else {
+                    suggestions.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                suggestions.classList.remove('show');
+            }
+        }
+        
+        function selectCity(item) {
+            const input = document.getElementById('hometown-input');
+            const suggestions = document.getElementById('hometown-suggestions');
+            
+            HOME = {
+                lat: parseFloat(item.dataset.lat),
+                lng: parseFloat(item.dataset.lng),
+                name: item.dataset.name
+            };
+            
+            input.value = HOME.name;
+            suggestions.classList.remove('show');
+            
+            // Update legend and subtitle
+            document.getElementById('legend-hometown').textContent = `${HOME.name} (Hometown)`;
+            document.getElementById('comparison-subtitle').textContent = `Based on 2026 season schedules from ${HOME.name}`;
+            
+            // Recalculate everything
+            recalculateDistances();
+            updateAllDisplays();
+            updateMap();
+            
+            // Update UCLA card for new baseline
+            updateUCLACard();
+        }
+        
+        // Update UCLA baseline card (special handling since it's fixed)
+        function updateUCLACard() {
+            const stats = calculateTeamStats('ucla');
+            
+            document.getElementById('score-ucla').textContent = stats.miseryScore;
+            document.getElementById('score-ucla').className = 'misery-value ' + 
+                (stats.miseryScore < 40 ? 'low' : stats.miseryScore < 70 ? 'medium' : 'high');
+            document.getElementById('miles-ucla').textContent = stats.totalMiles.toLocaleString();
+            document.getElementById('flights-ucla').textContent = stats.flights;
+            document.getElementById('cost-ucla').textContent = '$' + stats.totalCost.toLocaleString();
+            
+            const homeInfo = getHomeGameInfo('ucla');
+            document.getElementById('home-ucla').textContent = homeInfo.text;
+            document.getElementById('home-ucla').style.color = homeInfo.color;
+        }
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            initSearch();
             initMap();
             initCharts();
             updateAllDisplays();
@@ -709,12 +962,17 @@
             
             if (stadium.distance < 100) {
                 return { text: `${stadium.totalTime} 🚗`, color: 'var(--accent-green)' };
+            } else if (stadium.distance < 150) {
+                // Drivable but far
+                return { text: `${stadium.totalTime} 🚗`, color: 'var(--accent-yellow)' };
             } else {
                 const schedule = SCHEDULES[teamId];
                 const homeGames = schedule ? schedule.filter(g => g.type === 'home').length : 0;
-                const flightTime = stadium.flight || '?h';
+                // Calculate flight time from distance (avg 500mph + buffer)
+                const flightHours = Math.round(stadium.distance / 500 + 0.5); // +0.5 for takeoff/landing
+                const flightTime = `${flightHours}h`;
                 return { 
-                    text: `${homeGames} × ${flightTime.replace(' (1 stop)', '')} ✈️`, 
+                    text: `${homeGames} × ${flightTime} ✈️`, 
                     color: stadium.distance > 1700 ? 'var(--accent-red)' : 'var(--accent-yellow)' 
                 };
             }
@@ -951,14 +1209,24 @@
             map = L.map('travelMap', { center: [38, -98], zoom: 4, attributionControl: false });
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
             
-            // Home marker
+            // Home marker (will be updated when location changes)
+            updateHomeMarker();
+            updateMap();
+        }
+        
+        function updateHomeMarker() {
+            // Remove old marker if exists
+            if (homeMarker) {
+                map.removeLayer(homeMarker);
+            }
+            
             const homeIcon = L.divIcon({
                 html: '<div style="width: 16px; height: 16px; background: #10b981; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></div>',
                 iconSize: [16, 16], iconAnchor: [8, 8]
             });
-            L.marker([HOME.lat, HOME.lng], { icon: homeIcon }).bindPopup('<strong>Chatsworth, CA</strong><br>Hometown').addTo(map);
-            
-            updateMap();
+            homeMarker = L.marker([HOME.lat, HOME.lng], { icon: homeIcon })
+                .bindPopup(`<strong>${HOME.name}</strong><br>Hometown`)
+                .addTo(map);
         }
         
         function setupMapTabs() {
@@ -980,6 +1248,9 @@
         }
         
         function updateMap() {
+            // Update home marker position
+            updateHomeMarker();
+            
             // Clear existing layers
             Object.values(teamLayers).forEach(layer => map.removeLayer(layer));
             teamLayers = {};
