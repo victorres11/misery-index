@@ -180,6 +180,20 @@
         .legend-dot.lsu { background: #9b59b6; }
         .legend-dot.home { background: #10b981; }
         
+        .charts-section { margin-bottom: 3rem; }
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .chart-title { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; color: var(--text-secondary); }
+        
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        
         .comparison-section {
             background: var(--bg-card);
             border-radius: 1rem;
@@ -427,6 +441,28 @@
                     <div class="legend-item"><div class="legend-dot ucla"></div><span>UCLA (35 min to Pasadena)</span></div>
                     <div class="legend-item"><div class="legend-dot texas"></div><span>Texas (3h flight to Austin)</span></div>
                     <div class="legend-item"><div class="legend-dot lsu"></div><span>LSU (4h flight to Baton Rouge)</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="charts-section">
+            <h2 class="section-title">Visual Comparison</h2>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Season Misery Score</div>
+                    <canvas id="miseryChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Season Cost by Game Type (2 people)</div>
+                    <canvas id="costChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Miles by Game Type</div>
+                    <canvas id="distanceChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Flights Required (Round Trips)</div>
+                    <canvas id="timeChart"></canvas>
                 </div>
             </div>
         </section>
@@ -695,6 +731,94 @@
                     team === 'all' || t === team ? map.addLayer(teamLayers[t]) : map.removeLayer(teamLayers[t]);
                 });
             });
+        });
+
+        // ==================== CHARTS ====================
+        const chartColors = {
+            ucla: 'rgba(45, 104, 196, 0.8)',
+            texas: 'rgba(191, 87, 0, 0.8)',
+            lsu: 'rgba(155, 89, 182, 0.8)'
+        };
+
+        // Misery Score Chart
+        new Chart(document.getElementById('miseryChart'), {
+            type: 'bar',
+            data: {
+                labels: ['UCLA', 'Texas', 'LSU'],
+                datasets: [{
+                    label: 'Misery Score',
+                    data: [24, 78, 92],
+                    backgroundColor: [chartColors.ucla, chartColors.texas, chartColors.lsu],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Cost by Game Type Chart
+        new Chart(document.getElementById('costChart'), {
+            type: 'bar',
+            data: {
+                labels: ['UCLA', 'Texas', 'LSU'],
+                datasets: [
+                    { label: 'Home Games', data: [120, 5950, 5700], backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 4 },
+                    { label: 'Away Games', data: [3150, 4600, 5150], backgroundColor: 'rgba(239, 68, 68, 0.8)', borderRadius: 4 },
+                    { label: 'Neutral Site', data: [0, 850, 0], backgroundColor: 'rgba(245, 158, 11, 0.8)', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                scales: {
+                    y: { stacked: true, beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => '$' + v.toLocaleString() } },
+                    x: { stacked: true, grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Miles by Game Type Chart
+        new Chart(document.getElementById('distanceChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Home Games', 'Away Games', 'Avg per Game'],
+                datasets: [
+                    { label: 'UCLA', data: [150, 5345, 495], backgroundColor: chartColors.ucla, borderRadius: 4 },
+                    { label: 'Texas', data: [9800, 8380, 1523], backgroundColor: chartColors.texas, borderRadius: 4 },
+                    { label: 'LSU', data: [10800, 9930, 1728], backgroundColor: chartColors.lsu, borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#2d2d3a' }, ticks: { color: '#9ca3af', callback: v => v.toLocaleString() + ' mi' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Flights Required Chart
+        new Chart(document.getElementById('timeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['UCLA (4 flights)', 'Texas (12 flights)', 'LSU (12 flights)'],
+                datasets: [{
+                    data: [4, 12, 12],
+                    backgroundColor: [chartColors.ucla, chartColors.texas, chartColors.lsu],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }
+            }
         });
     </script>
 </body>
