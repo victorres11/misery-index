@@ -178,21 +178,115 @@
         .school-name { font-size: 1.25rem; font-weight: 600; }
         .school-conf { font-size: 0.875rem; color: var(--text-secondary); }
         
-        .team-selector {
+        .team-selector-wrapper {
+            position: relative;
+            margin-top: 0.5rem;
+        }
+        
+        .team-selector-button {
             width: 100%;
-            padding: 0.5rem;
+            padding: 0.5rem 0.75rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
             color: var(--text-primary);
             font-size: 0.875rem;
             cursor: pointer;
-            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: border-color 0.2s;
         }
         
-        .team-selector:focus {
-            outline: none;
+        .team-selector-button:hover {
+            border-color: var(--text-secondary);
+        }
+        
+        .team-selector-button.open {
             border-color: var(--accent-blue);
+        }
+        
+        .team-selector-button .team-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .team-selector-button .team-name {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .team-selector-button .dropdown-arrow {
+            font-size: 0.625rem;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+        
+        .team-selector-button.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .team-selector-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .team-selector-dropdown.show {
+            display: block;
+        }
+        
+        .team-selector-group {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .team-selector-option {
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.15s;
+        }
+        
+        .team-selector-option:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .team-selector-option.selected {
+            background: rgba(59, 130, 246, 0.15);
+        }
+        
+        .team-selector-option .team-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        /* Hide native select */
+        .team-selector {
+            display: none;
         }
         
         .baseline-badge {
@@ -921,12 +1015,110 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             initSearch();
+            initTeamSelectors();
             initMap();
             initCharts();
             updateAllDisplays();
             setupScheduleTabs();
             setupMapTabs();
         });
+        
+        // Custom team selector dropdowns
+        function initTeamSelectors() {
+            document.querySelectorAll('.team-selector').forEach(select => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'team-selector-wrapper';
+                
+                const slot = select.id.replace('selector-', '');
+                const currentTeamId = selectedTeams[slot];
+                const currentTeam = TEAMS[currentTeamId];
+                
+                // Create button
+                const button = document.createElement('div');
+                button.className = 'team-selector-button';
+                button.innerHTML = `
+                    <div class="team-color-dot" style="background: ${currentTeam.color}"></div>
+                    <span class="team-name">${currentTeam.name}</span>
+                    <span class="dropdown-arrow">▼</span>
+                `;
+                
+                // Create dropdown
+                const dropdown = document.createElement('div');
+                dropdown.className = 'team-selector-dropdown';
+                
+                // Group teams by conference
+                const conferences = {};
+                Object.entries(TEAMS).forEach(([teamId, team]) => {
+                    if (!conferences[team.conference]) conferences[team.conference] = [];
+                    conferences[team.conference].push({ id: teamId, ...team });
+                });
+                
+                // Build dropdown HTML
+                let dropdownHTML = '';
+                Object.entries(conferences).sort().forEach(([conf, teams]) => {
+                    dropdownHTML += `<div class="team-selector-group">${conf}</div>`;
+                    teams.sort((a, b) => a.name.localeCompare(b.name)).forEach(team => {
+                        const isSelected = team.id === currentTeamId ? 'selected' : '';
+                        dropdownHTML += `
+                            <div class="team-selector-option ${isSelected}" data-team-id="${team.id}" data-slot="${slot}">
+                                <div class="team-color-dot" style="background: ${team.color}"></div>
+                                <span>${team.name}</span>
+                            </div>
+                        `;
+                    });
+                });
+                dropdown.innerHTML = dropdownHTML;
+                
+                // Insert into DOM
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(button);
+                wrapper.appendChild(dropdown);
+                wrapper.appendChild(select);
+                
+                // Toggle dropdown
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Close other dropdowns
+                    document.querySelectorAll('.team-selector-dropdown.show').forEach(d => {
+                        if (d !== dropdown) d.classList.remove('show');
+                    });
+                    document.querySelectorAll('.team-selector-button.open').forEach(b => {
+                        if (b !== button) b.classList.remove('open');
+                    });
+                    dropdown.classList.toggle('show');
+                    button.classList.toggle('open');
+                });
+                
+                // Handle selection
+                dropdown.querySelectorAll('.team-selector-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        const teamId = option.dataset.teamId;
+                        const team = TEAMS[teamId];
+                        
+                        // Update button
+                        button.querySelector('.team-color-dot').style.background = team.color;
+                        button.querySelector('.team-name').textContent = team.name;
+                        
+                        // Update selected state
+                        dropdown.querySelectorAll('.team-selector-option').forEach(o => o.classList.remove('selected'));
+                        option.classList.add('selected');
+                        
+                        // Close dropdown
+                        dropdown.classList.remove('show');
+                        button.classList.remove('open');
+                        
+                        // Trigger update
+                        updateTeam(slot, teamId);
+                    });
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.team-selector-dropdown.show').forEach(d => d.classList.remove('show'));
+                document.querySelectorAll('.team-selector-button.open').forEach(b => b.classList.remove('open'));
+            });
+        }
         
         function updateTeam(slot, teamId) {
             selectedTeams[slot] = teamId;
