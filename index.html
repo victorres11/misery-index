@@ -693,7 +693,12 @@
                 }
             });
             
-            const miseryScore = Math.min(100, Math.round((totalMiles / 500) + (totalCost / 500) + (flights * 3)));
+            // Score weighted: 40% miles, 30% cost, 30% flights (relative to max reasonable values)
+            const miseryScore = Math.min(100, Math.round(
+                (totalMiles / 30000 * 40) + 
+                (totalCost / 20000 * 30) + 
+                (flights / 12 * 30)
+            ));
             
             return { totalMiles, totalCost, flights, miseryScore };
         }
