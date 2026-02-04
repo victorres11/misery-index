@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Misery Index - Football Recruit Travel Calculator</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -377,6 +379,40 @@
             font-size: 0.875rem;
         }
         
+        .floating-badge {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 9999px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .floating-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .floating-badge span {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .floating-badge img {
+            height: 22px;
+            width: auto;
+        }
+        
         @media (max-width: 1024px) {
             .summary-grid { grid-template-columns: 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
@@ -682,6 +718,12 @@
             <p>Misery Index · Data based on 2026 schedules · Costs are estimates for 2 people (flights + 1 night hotel) · Distances calculated from your selected hometown</p>
         </footer>
     </div>
+
+    <!-- Floating Badge -->
+    <a href="https://victorres.xyz" target="_blank" rel="noopener" class="floating-badge">
+        <span>made with ❤️ by</span>
+        <img src="vt-logo-text.png" alt="VT Sports Solutions">
+    </a>
 
     <script src="teams-data.js"></script>
     <script>
@@ -1272,11 +1314,20 @@
                     layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [homeStadium.lat, homeStadium.lng], 20), 
                         { color, weight: isLocal ? 2 : 4, opacity: isLocal ? 0.4 : 0.8 }));
                     
+                    // Count home games and get dates
+                    const homeGames = schedule.filter(g => g.type === 'home');
+                    const homeGameDates = homeGames.map(g => g.date).join(', ');
+                    const tripText = homeGames.length === 1 ? 'trip' : 'trips';
+                    
                     const stadiumIcon = L.divIcon({
                         html: `<div style="width: ${isLocal ? 12 : 16}px; height: ${isLocal ? 12 : 16}px; background: ${color}; border-radius: 3px; border: 2px solid #fff; transform: rotate(45deg);"></div>`,
                         iconSize: [16, 16], iconAnchor: [8, 8]
                     });
-                    layer.addLayer(L.marker([homeStadium.lat, homeStadium.lng], { icon: stadiumIcon }).bindPopup(`<strong>${homeStadium.name}</strong><br>Home Stadium`));
+                    layer.addLayer(L.marker([homeStadium.lat, homeStadium.lng], { icon: stadiumIcon }).bindPopup(
+                        `<strong>${homeStadium.name}</strong><br>` +
+                        `<span style="color: #666;">Home Stadium · ${homeGames.length} ${tripText}</span><br>` +
+                        `<span style="font-size: 11px; color: #888;">${homeGameDates}</span>`
+                    ));
                 }
                 
                 // Away games
@@ -1288,11 +1339,17 @@
                     layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [location.lat, location.lng], 20), 
                         { color, weight: 2, opacity: 0.6, dashArray: '5, 10' }));
                     
+                    const gameType = game.type === 'neutral' ? 'Neutral Site' : 'Away Game';
+                    
                     const destIcon = L.divIcon({
                         html: `<div style="width: 10px; height: 10px; background: ${color}; border-radius: 50%; border: 2px solid #fff;"></div>`,
                         iconSize: [10, 10], iconAnchor: [5, 5]
                     });
-                    layer.addLayer(L.marker([location.lat, location.lng], { icon: destIcon }).bindPopup(`<strong>${location.name}</strong><br>Away Game`));
+                    layer.addLayer(L.marker([location.lat, location.lng], { icon: destIcon }).bindPopup(
+                        `<strong>${location.name}</strong><br>` +
+                        `<span style="color: #666;">${gameType} · ${game.date}</span><br>` +
+                        `<span style="font-size: 11px; color: #888;">vs ${game.opponent}</span>`
+                    ));
                 });
                 
                 teamLayers[slot] = layer;
