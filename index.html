@@ -1314,11 +1314,20 @@
                     layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [homeStadium.lat, homeStadium.lng], 20), 
                         { color, weight: isLocal ? 2 : 4, opacity: isLocal ? 0.4 : 0.8 }));
                     
+                    // Count home games and get dates
+                    const homeGames = schedule.filter(g => g.type === 'home');
+                    const homeGameDates = homeGames.map(g => g.date).join(', ');
+                    const tripText = homeGames.length === 1 ? 'trip' : 'trips';
+                    
                     const stadiumIcon = L.divIcon({
                         html: `<div style="width: ${isLocal ? 12 : 16}px; height: ${isLocal ? 12 : 16}px; background: ${color}; border-radius: 3px; border: 2px solid #fff; transform: rotate(45deg);"></div>`,
                         iconSize: [16, 16], iconAnchor: [8, 8]
                     });
-                    layer.addLayer(L.marker([homeStadium.lat, homeStadium.lng], { icon: stadiumIcon }).bindPopup(`<strong>${homeStadium.name}</strong><br>Home Stadium`));
+                    layer.addLayer(L.marker([homeStadium.lat, homeStadium.lng], { icon: stadiumIcon }).bindPopup(
+                        `<strong>${homeStadium.name}</strong><br>` +
+                        `<span style="color: #666;">Home Stadium · ${homeGames.length} ${tripText}</span><br>` +
+                        `<span style="font-size: 11px; color: #888;">${homeGameDates}</span>`
+                    ));
                 }
                 
                 // Away games
@@ -1330,11 +1339,17 @@
                     layer.addLayer(L.polyline(createArc([HOME.lat, HOME.lng], [location.lat, location.lng], 20), 
                         { color, weight: 2, opacity: 0.6, dashArray: '5, 10' }));
                     
+                    const gameType = game.type === 'neutral' ? 'Neutral Site' : 'Away Game';
+                    
                     const destIcon = L.divIcon({
                         html: `<div style="width: 10px; height: 10px; background: ${color}; border-radius: 50%; border: 2px solid #fff;"></div>`,
                         iconSize: [10, 10], iconAnchor: [5, 5]
                     });
-                    layer.addLayer(L.marker([location.lat, location.lng], { icon: destIcon }).bindPopup(`<strong>${location.name}</strong><br>Away Game`));
+                    layer.addLayer(L.marker([location.lat, location.lng], { icon: destIcon }).bindPopup(
+                        `<strong>${location.name}</strong><br>` +
+                        `<span style="color: #666;">${gameType} · ${game.date}</span><br>` +
+                        `<span style="font-size: 11px; color: #888;">vs ${game.opponent}</span>`
+                    ));
                 });
                 
                 teamLayers[slot] = layer;
