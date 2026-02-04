@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://api.mapbox.com/search-js/v1.0.0-beta.21/web.js"></script>
+    <!-- Using Mapbox Geocoding API directly -->
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -74,44 +74,68 @@
         
         #hometown-search {
             position: relative;
-            min-width: 220px;
+            min-width: 200px;
         }
         
-        /* Mapbox SearchBox styling overrides for dark theme */
-        #hometown-search mapbox-search-box {
-            --search-box-background: transparent;
-            --search-box-text-color: #fff;
-            --search-box-font-family: inherit;
-            --search-box-font-size: 0.95rem;
-            --search-box-input-padding: 0.25rem 0;
-            --search-box-border: none;
-            --search-box-box-shadow: none;
+        #hometown-input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
             font-weight: 600;
+            outline: none;
+            width: 100%;
+            padding: 0.25rem 0;
         }
         
-        #hometown-search input {
-            background: transparent !important;
-            border: none !important;
-            color: var(--text-primary) !important;
-            font-size: 0.95rem !important;
-            font-weight: 600 !important;
-            box-shadow: none !important;
-            padding: 0.25rem 0 !important;
+        #hometown-input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
         }
         
-        /* Results dropdown */
-        .mapboxgl-ctrl-geocoder, .suggestions-wrapper, [class*="SearchBox"] {
-            background: var(--bg-card) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 8px !important;
+        #hometown-suggestions {
+            position: absolute;
+            top: 100%;
+            left: -1rem;
+            right: -1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         
-        .mapboxgl-ctrl-geocoder--suggestion, [class*="Suggestion"] {
-            color: var(--text-primary) !important;
+        #hometown-suggestions.show {
+            display: block;
         }
         
-        .mapboxgl-ctrl-geocoder--suggestion:hover, [class*="Suggestion"]:hover {
-            background: var(--bg-secondary) !important;
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .suggestion-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .suggestion-item .city-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .suggestion-item .city-region {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
         }
         
         .summary-grid {
@@ -378,7 +402,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <label>Hometown:</label>
-                <div id="hometown-search"></div>
+                <div id="hometown-search">
+                    <input type="text" id="hometown-input" placeholder="Search city..." autocomplete="off">
+                    <div id="hometown-suggestions"></div>
+                </div>
             </div>
         </header>
 
@@ -730,41 +757,107 @@
         }
         
         // Initialize Mapbox search
+        let searchTimeout = null;
+        
         function initSearch() {
-            const searchBox = document.createElement('mapbox-search-box');
-            searchBox.accessToken = MAPBOX_TOKEN;
-            searchBox.options = {
-                types: 'place,locality',
-                country: 'US',
-                limit: 5
-            };
-            searchBox.placeholder = HOME.name;
+            const input = document.getElementById('hometown-input');
+            const suggestions = document.getElementById('hometown-suggestions');
             
-            document.getElementById('hometown-search').appendChild(searchBox);
+            // Set initial value
+            input.value = HOME.name;
             
-            // Handle selection
-            searchBox.addEventListener('retrieve', (e) => {
-                const feature = e.detail.features[0];
-                if (feature) {
-                    HOME = {
-                        lat: feature.geometry.coordinates[1],
-                        lng: feature.geometry.coordinates[0],
-                        name: feature.properties.name_preferred || feature.properties.name || feature.properties.place_name
-                    };
-                    
-                    // Update legend and subtitle
-                    document.getElementById('legend-hometown').textContent = `${HOME.name} (Hometown)`;
-                    document.getElementById('comparison-subtitle').textContent = `Based on 2026 season schedules from ${HOME.name}`;
-                    
-                    // Recalculate everything
-                    recalculateDistances();
-                    updateAllDisplays();
-                    updateMap();
-                    
-                    // Update UCLA card for new baseline
-                    updateUCLACard();
+            // Debounced search on input
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                
+                if (searchTimeout) clearTimeout(searchTimeout);
+                
+                if (query.length < 2) {
+                    suggestions.classList.remove('show');
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => searchCities(query), 300);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#hometown-search')) {
+                    suggestions.classList.remove('show');
                 }
             });
+            
+            // Show suggestions on focus if there's a query
+            input.addEventListener('focus', () => {
+                if (input.value.trim().length >= 2 && suggestions.children.length > 0) {
+                    suggestions.classList.add('show');
+                }
+            });
+        }
+        
+        async function searchCities(query) {
+            const suggestions = document.getElementById('hometown-suggestions');
+            
+            try {
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+                    `access_token=${MAPBOX_TOKEN}&types=place,locality&country=US&limit=5`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    suggestions.innerHTML = data.features.map(feature => {
+                        const placeName = feature.place_name.split(',');
+                        const city = placeName[0];
+                        const region = placeName.slice(1).join(',').trim();
+                        
+                        return `
+                            <div class="suggestion-item" data-lat="${feature.center[1]}" data-lng="${feature.center[0]}" data-name="${city}">
+                                <div class="city-name">${city}</div>
+                                <div class="city-region">${region}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Add click handlers
+                    suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                        item.addEventListener('click', () => selectCity(item));
+                    });
+                    
+                    suggestions.classList.add('show');
+                } else {
+                    suggestions.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                suggestions.classList.remove('show');
+            }
+        }
+        
+        function selectCity(item) {
+            const input = document.getElementById('hometown-input');
+            const suggestions = document.getElementById('hometown-suggestions');
+            
+            HOME = {
+                lat: parseFloat(item.dataset.lat),
+                lng: parseFloat(item.dataset.lng),
+                name: item.dataset.name
+            };
+            
+            input.value = HOME.name;
+            suggestions.classList.remove('show');
+            
+            // Update legend and subtitle
+            document.getElementById('legend-hometown').textContent = `${HOME.name} (Hometown)`;
+            document.getElementById('comparison-subtitle').textContent = `Based on 2026 season schedules from ${HOME.name}`;
+            
+            // Recalculate everything
+            recalculateDistances();
+            updateAllDisplays();
+            updateMap();
+            
+            // Update UCLA card for new baseline
+            updateUCLACard();
         }
         
         // Update UCLA baseline card (special handling since it's fixed)
